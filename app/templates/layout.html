@@ -267,6 +267,9 @@
               {% if can('participants:view') %}
                 <a class="pill {% if ep.startswith('participants.') %}active{% endif %}" href="{{ url_for('participants.list_participants') }}">Participants</a>
               {% endif %}
+              {% if can('quartiers:view') %}
+                <a class="pill {% if ep.startswith('quartiers.') %}active{% endif %}" href="{{ url_for('quartiers.index') }}">Quartiers</a>
+              {% endif %}
             </div>
 
             <details class="nav-group nav-more">
@@ -304,6 +307,9 @@
               {% endif %}
               {% if can('secteurs:edit') %}
                 <a class="pill {% if ep.startswith('admin.secteurs') %}active{% endif %}" href="{{ safe_url_for('admin.secteurs') }}">Secteurs</a>
+              {% endif %}
+              {% if can('quartiers:view') %}
+                <a class="pill {% if ep.startswith('quartiers.') %}active{% endif %}" href="{{ url_for('quartiers.index') }}">Quartiers</a>
               {% endif %}
               <a class="pill {% if ep.startswith('main.controle') %}active{% endif %}" href="{{ url_for('main.controle') }}">Contrôle</a>
             </div>
@@ -366,6 +372,46 @@
     btn.addEventListener("click", ()=>{
       const current = root.getAttribute("data-theme") || "dark";
       apply(current === "dark" ? "light" : "dark");
+    });
+  })();
+  </script>
+
+  <script>
+  (function(){
+    function normalize(value){
+      return (value || "").trim().toLowerCase();
+    }
+
+    function applyFilter(select, villeValue){
+      const ville = normalize(villeValue);
+      let selectedHidden = false;
+      select.querySelectorAll("option").forEach((opt) => {
+        const optVille = opt.getAttribute("data-ville");
+        if (!opt.value || !optVille) {
+          opt.hidden = false;
+          return;
+        }
+        const match = !ville || normalize(optVille) === ville;
+        opt.hidden = !match;
+        if (opt.selected && !match) {
+          selectedHidden = true;
+        }
+      });
+      if (selectedHidden) {
+        select.value = "";
+      }
+    }
+
+    document.querySelectorAll("[data-quartier-select]").forEach((select) => {
+      const scope = select.closest("form") || document;
+      const villeInput = scope.querySelector("[data-ville-input]");
+      if (!villeInput) {
+        return;
+      }
+      const run = () => applyFilter(select, villeInput.value);
+      villeInput.addEventListener("input", run);
+      villeInput.addEventListener("change", run);
+      run();
     });
   })();
   </script>
