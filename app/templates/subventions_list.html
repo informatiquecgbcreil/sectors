@@ -1,0 +1,267 @@
+{% extends "layout.html" %}
+{% block body %}
+
+{#
+  Subventions — UI "AAP-like" (cards, KPI, callouts)
+  - Zéro changement backend : on garde la liste complète côté serveur.
+  - Filtrage simple côté navigateur (recherche + filtre année).
+#}
+
+{% set ns = namespace(count=0, total_demande=0, total_attribue=0, total_recu=0, years=[]) %}
+{% for s in subs %}
+  {% set ns.count = ns.count + 1 %}
+  {% set ns.total_demande = ns.total_demande + (s.montant_demande or 0) %}
+  {% set ns.total_attribue = ns.total_attribue + (s.montant_attribue or 0) %}
+  {% set ns.total_recu = ns.total_recu + (s.montant_recu or 0) %}
+  {% if s.annee_exercice not in ns.years %}
+    {% set _ = ns.years.append(s.annee_exercice) %}
+  {% endif %}
+{% endfor %}
+{% set ns.years = ns.years|sort(reverse=true) %}
+
+{% set pct_recu_sur_attribue = (ns.total_recu / ns.total_attribue * 100) if ns.total_attribue else 0 %}
+{% set pct_attribue_sur_demande = (ns.total_attribue / ns.total_demande * 100) if ns.total_demande else 0 %}
+
+<div class="stack">
+
+  <div class="card">
+    <div class="card-header" style="align-items:flex-start;">
+      <div>
+        <h1 class="card-title">Subventions</h1>
+        <p class="card-subtitle">Liste des dossiers (actifs). Ouvre un dossier pour le pilotage, le bilan, et l’export.</p>
+      </div>
+
+      <div class="inline">
+        <a class="btn" href="{{ url_for('main.bilan_global') }}">Bilans</a>
+        <a class="btn" href="{{ url_for('main.dashboard') }}">Tableau de bord</a>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="muted">Dossiers</div>
+        <div class="kpi-value">{{ ns.count }}</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="muted">Total demandé</div>
+        <div class="kpi-value">{{ "%.2f"|format(ns.total_demande or 0) }}€</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="muted">Total attribué</div>
+        <div class="kpi-value">{{ "%.2f"|format(ns.total_attribue or 0) }}€</div>
+        <div class="kpi-sub">{{ "%.0f"|format(pct_attribue_sur_demande) }}% du demandé</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="muted">Total reçu</div>
+        <div class="kpi-value">{{ "%.2f"|format(ns.total_recu or 0) }}€</div>
+        <div class="kpi-sub">{{ "%.0f"|format(pct_recu_sur_attribue) }}% de l’attribué</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="section-title">Progression globale</div>
+      <div class="meter" aria-label="Progression globale">
+        <div class="meter__fill meter__fill--ok" style="width:{{ pct_recu_sur_attribue }}%"></div>
+      </div>
+      <div class="balance-legend">
+        <div class="muted">Attribué : <strong>{{ "%.2f"|format(ns.total_attribue or 0) }}€</strong></div>
+        <div class="muted">Reçu : <strong>{{ "%.2f"|format(ns.total_recu or 0) }}€</strong> ({{ "%.0f"|format(pct_recu_sur_attribue) }}%)</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="grid two">
+    <div class="card">
+      <div class="section-title">Trouver / filtrer</div>
+      <div class="row three">
+        <div>
+          <label>Recherche</label>
+          <input id="subvSearch" placeholder="Nom, secteur, année…">
+        </div>
+        <div>
+          <label>Année</label>
+          <select id="subvYear">
+            <option value="">Toutes</option>
+            {% for y in ns.years %}
+              <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Secteur</label>
+          <select id="subvSect">
+            <option value="">Tous</option>
+            {% for sec in secteurs %}
+              <option value="{{ sec }}">{{ sec }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="muted">(Le filtre est local : ça ne change pas la base, ça t’aide juste à retrouver vite.)</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Créer une subvention</div>
+      <p class="muted">Une fois créée, tu l’ouvres pour rattacher des projets, ventiler, et suivre les dépenses.</p>
+
+      <form method="POST" action="{{ url_for('main.subvention_create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row two">
+          <div>
+            <label>Nom</label>
+            <input name="nom" required placeholder="Ex: Politique de la Ville / P147">
+          </div>
+          <div>
+            <label>Année exercice</label>
+            <input name="annee_exercice" type="number" value="{{ (ns.years[0] if ns.years|length else 2026) }}">
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row three">
+          <div>
+            <label>Secteur</label>
+            <select name="secteur" {% if not current_user or (not can('scope:all_secteurs')) %}disabled{% endif %}>
+              {% for sec in secteurs %}
+                <option value="{{ sec }}" {% if current_user and (not can('scope:all_secteurs')) and (current_user.secteur_assigne == sec) %}selected{% endif %}>{{ sec }}</option>
+              {% endfor %}
+            </select>
+            {% if current_user and (not can('scope:all_secteurs')) %}
+              <input type="hidden" name="secteur" value="{{ current_user.secteur_assigne }}">
+            {% endif %}
+          </div>
+          <div>
+            <label>Demandé (€)</label>
+            <input name="montant_demande" type="number" step="0.01" value="0">
+          </div>
+          <div>
+            <label>Attribué (€)</label>
+            <input name="montant_attribue" type="number" step="0.01" value="0">
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row two">
+          <div>
+            <label>Reçu (€)</label>
+            <input name="montant_recu" type="number" step="0.01" value="0">
+          </div>
+          <div style="display:flex; align-items:end;">
+            <button class="btn ok" type="submit">Créer</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <div class="section-title">Liste</div>
+
+    <div class="tablewrap">
+      <table id="subvTable">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Secteur</th>
+            <th>Année</th>
+            <th>Demandé</th>
+            <th>Attribué</th>
+            <th>Reçu</th>
+            <th>Suivi</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subs %}
+            {% set pct = ((s.montant_recu or 0) / (s.montant_attribue or 0) * 100) if (s.montant_attribue or 0) else 0 %}
+            <tr class="subvRow"
+                data-search="{{ (s.nom ~ ' ' ~ s.secteur ~ ' ' ~ s.annee_exercice)|lower }}"
+                data-year="{{ s.annee_exercice }}"
+                data-secteur="{{ s.secteur }}">
+              <td><strong>{{ s.nom }}</strong></td>
+              <td>{{ s.secteur }}</td>
+              <td>{{ s.annee_exercice }}</td>
+              <td>{{ "%.2f"|format(s.montant_demande or 0) }}€</td>
+              <td>{{ "%.2f"|format(s.montant_attribue or 0) }}€</td>
+              <td><strong>{{ "%.2f"|format(s.montant_recu or 0) }}€</strong></td>
+              <td style="min-width:220px;">
+                <div class="meter" aria-label="Suivi">
+                  <div class="meter__fill {{ 'meter__fill--ok' if pct >= 80 else ('meter__fill--warn' if pct >= 30 else 'meter__fill--danger') }}" style="width:{{ pct }}%"></div>
+                </div>
+                <div class="muted" style="margin-top:6px;">{{ "%.0f"|format(pct) }}% reçu / attribué</div>
+              </td>
+              <td>
+                <div class="inline">
+                  <a class="btn" href="{{ url_for('main.subvention_pilotage', subvention_id=s.id) }}">Ouvrir</a>
+                  <a class="btn" href="{{ url_for('main.subvention_bilan', subvention_id=s.id) }}">Bilan</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+
+          {% if subs|length == 0 %}
+            <tr><td colspan="8" class="muted">Aucune subvention pour le moment.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="callout callout--warn" id="subvNoResult" style="display:none;">
+      <div class="callout__title">Aucun résultat</div>
+      <div class="muted">Ton filtre ne matche aucun dossier.</div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  (function(){
+    const q = document.getElementById('subvSearch');
+    const y = document.getElementById('subvYear');
+    const s = document.getElementById('subvSect');
+    const rows = Array.from(document.querySelectorAll('.subvRow'));
+    const no = document.getElementById('subvNoResult');
+
+    function apply(){
+      const needle = (q.value || '').trim().toLowerCase();
+      const year = (y.value || '').trim();
+      const sect = (s.value || '').trim();
+
+      let visible = 0;
+      rows.forEach(r => {
+        const hay = r.getAttribute('data-search') || '';
+        const ry = r.getAttribute('data-year') || '';
+        const rs = r.getAttribute('data-secteur') || '';
+
+        const okText = !needle || hay.includes(needle);
+        const okYear = !year || ry === year;
+        const okSect = !sect || rs === sect;
+
+        const show = okText && okYear && okSect;
+        r.style.display = show ? '' : 'none';
+        if(show) visible++;
+      });
+
+      if(no) no.style.display = (rows.length && visible === 0) ? '' : 'none';
+    }
+
+    if(q) q.addEventListener('input', apply);
+    if(y) y.addEventListener('change', apply);
+    if(s) s.addEventListener('change', apply);
+  })();
+</script>
+
+{% endblock %}

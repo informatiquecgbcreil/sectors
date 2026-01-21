@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container">
+  <div class="stack">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h1 class="card-title">Stats &amp; Impacts</h1>
+          <p class="card-subtitle">Tu filtres, tu exportes. Zéro page qui ressemble à une autre appli.</p>
+        </div>
+        <a class="btn" href="{{ url_for('statsimpact.dashboard') }}?{{ request.query_string.decode('utf-8') }}">Ouvrir le dashboard complet</a>
+      </div>
+
+      <div class="row three" style="align-items:end;">
+        <form method="get" class="row three" style="align-items:end; width:100%;">
+          {% if secteurs and secteurs|length > 0 %}
+          <div>
+            <label>Secteur</label>
+            <select name="secteur">
+              <option value="">Tous</option>
+              {% for s in secteurs %}
+                <option value="{{ s }}" {% if flt.secteur==s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+          <div>
+            <label>Atelier</label>
+            <select name="atelier_id">
+              <option value="">Tous</option>
+              {% for a in ateliers %}
+                <option value="{{ a.id }}" {% if flt.atelier_id==a.id %}selected{% endif %}>{{ a.secteur }} — {{ a.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label>Du</label>
+            {% set date_from_value = flt.date_from.isoformat() if flt.date_from else "" %}
+            <input type="date" name="date_from" value="{{ date_from_value }}">
+            <div class="muted" style="font-size:12px;margin-top:4px;">Vide = année courante (auto)</div>
+          </div>
+
+          <div>
+            <label>Au</label>
+            {% set date_to_value = flt.date_to.isoformat() if flt.date_to else "" %}
+            <input type="date" name="date_to" value="{{ date_to_value }}">
+            <div class="muted" style="font-size:12px;margin-top:4px;">Vide = année courante (auto)</div>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:end;">
+            <button class="btn" type="submit">Appliquer</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="inline" style="margin-top:10px;">
+        <span class="pill">Période : {{ flt.date_from }} → {{ flt.date_to }}</span>
+        <span class="pill">Secteur : {{ flt.secteur or "Tous" }}</span>
+        <span class="pill">Atelier : {% if flt.atelier_id %}#{{ flt.atelier_id }}{% else %}Tous{% endif %}</span>
+      </div>
+    </div>
+
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title" style="margin:0;">Exports</h2>
+      </div>
+
+      <ul class="muted" style="margin:0; padding-left:18px;">
+        <li><strong>CSV défaut</strong> : 1 ligne = 1 présence (participant × session).</li>
+        <li><strong>XLSX Magatomatique</strong> : synthèse + (optionnel) matrice.</li>
+        <li><strong>XLSX annuel (1 feuille / atelier)</strong> : stats + matrice participants×sessions (avec âge/ville/quartier).</li>
+      </ul>
+
+      <div class="inline" style="margin-top:12px;">
+        <a class="btn ok" href="{{ url_for('statsimpact.magatomatique_export') }}?{{ request.query_string.decode('utf-8') }}">Exporter XLSX (Magatomatique)</a>
+        <a class="btn" href="{{ url_for('statsimpact.magatomatique_export') }}?{{ request.query_string.decode('utf-8') }}&export_mode=per_atelier">XLSX annuel (1 feuille / atelier)</a>
+        <a class="btn" href="{{ url_for('statsimpact.magatomatique_export_csv') }}?{{ request.query_string.decode('utf-8') }}">Exporter CSV (défaut)</a>
+      </div>
+    </div>
+
+
+    <div class="card">
+      <details open>
+        <summary style="font-weight:900;">CSV sur mesure (optionnel) — tu choisis les colonnes</summary>
+        <p class="muted" style="margin-top:8px;">Toujours 1 ligne = 1 présence (participant × session). Si tu veux un tableau matrice : prends le <strong>XLSX annuel</strong>.</p>
+
+        <div class="inline" style="margin-top:10px;">
+          <button class="btn" type="button" data-csv-select="all">Tout cocher</button>
+          <button class="btn" type="button" data-csv-select="none">Tout décocher</button>
+        </div>
+
+        <form method="get" action="{{ url_for('statsimpact.magatomatique_export_csv') }}" style="margin-top:12px;">
+          {% if flt.secteur %}<input type="hidden" name="secteur" value="{{ flt.secteur }}">{% endif %}
+          {% if flt.atelier_id %}<input type="hidden" name="atelier_id" value="{{ flt.atelier_id }}">{% endif %}
+          <input type="hidden" name="date_from" value="{{ flt.date_from or '' }}">
+          <input type="hidden" name="date_to" value="{{ flt.date_to or '' }}">
+
+          <div class="stack" style="margin-top:8px;">
+            {% for group in csv_field_groups or [] %}
+              <div>
+                <div style="font-weight:900; margin-bottom:6px;">{{ group.label }}</div>
+                <div class="inline">
+                  {% for field in group.fields %}
+                    <label class="pill" style="cursor:pointer;">
+                      <input type="checkbox" name="fields" value="{{ field.key }}" {% if field.key in csv_default_fields %}checked{% endif %}>
+                      {{ field.label }}
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div style="margin-top:12px;">
+            <button class="btn" type="submit">Exporter CSV sur mesure</button>
+          </div>
+        </form>
+      </details>
+    </div>
+
+    <div class="card callout">
+      <div class="callout__title">Aide rapide</div>
+      <div class="muted">
+        Si tu veux une feuille par atelier avec <em>toutes les sessions en colonnes</em>, et les participants en lignes → <strong>XLSX annuel</strong>.<br>
+        Si tu veux du brut à retraiter → <strong>CSV défaut</strong> ou <strong>CSV sur mesure</strong>.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const buttons = document.querySelectorAll('[data-csv-select]');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-csv-select');
+      const checkboxes = document.querySelectorAll('[name="fields"]');
+      checkboxes.forEach(cb => cb.checked = (mode === 'all'));
+    });
+  });
+})();
+</script>
+{% endblock %}
