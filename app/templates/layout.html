@@ -284,6 +284,9 @@
                 {% if can('bilans:view') %}
                   <a class="pill {% if ep.startswith('bilans.') %}active{% endif %}" href="{{ url_for('bilans.bilans_lourds', year=2026) }}">Bilans lourds</a>
                 {% endif %}
+                {% if can('partenaires:view') %}
+                  <a class="pill {% if ep.startswith('partenaires.') %}active{% endif %}" href="{{ url_for('partenaires.index') }}">Annuaire partenaires</a>
+                {% endif %}
                 {% if can('controle:view') %}
                   <a class="pill {% if ep.startswith('main.controle') %}active{% endif %}" href="{{ url_for('main.controle') }}">Contrôle</a>
                 {% endif %}

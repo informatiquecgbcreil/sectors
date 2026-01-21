@@ -673,6 +673,56 @@ class Quartier(db.Model):
     )
 
 
+class Partenaire(db.Model):
+    __tablename__ = "partenaire"
+    id = db.Column(db.Integer, primary_key=True)
+
+    nom = db.Column(db.String(180), nullable=False)
+    contact_nom = db.Column(db.String(120), nullable=True)
+    contact_prenom = db.Column(db.String(120), nullable=True)
+    adresse = db.Column(db.String(255), nullable=True)
+
+    email_contact = db.Column(db.String(180), nullable=True)
+    email_general = db.Column(db.String(180), nullable=True)
+    tel_contact = db.Column(db.String(60), nullable=True)
+    tel_general = db.Column(db.String(60), nullable=True)
+
+    description = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    secteurs = db.relationship("PartenaireSecteur", backref="partenaire", cascade="all, delete-orphan")
+    interventions = db.relationship(
+        "PartenaireIntervention",
+        backref="partenaire",
+        cascade="all, delete-orphan",
+        order_by="desc(PartenaireIntervention.date_intervention)",
+    )
+
+
+class PartenaireSecteur(db.Model):
+    __tablename__ = "partenaire_secteur"
+    id = db.Column(db.Integer, primary_key=True)
+    partenaire_id = db.Column(db.Integer, db.ForeignKey("partenaire.id", ondelete="CASCADE"), nullable=False)
+    secteur = db.Column(db.String(80), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("partenaire_id", "secteur", name="uq_partenaire_secteur"),
+    )
+
+
+class PartenaireIntervention(db.Model):
+    __tablename__ = "partenaire_intervention"
+    id = db.Column(db.Integer, primary_key=True)
+    partenaire_id = db.Column(db.Integer, db.ForeignKey("partenaire.id", ondelete="CASCADE"), nullable=False)
+    secteur = db.Column(db.String(80), nullable=True)
+    date_intervention = db.Column(db.Date, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Participant(db.Model):
     __tablename__ = "participant"
     id = db.Column(db.Integer, primary_key=True)

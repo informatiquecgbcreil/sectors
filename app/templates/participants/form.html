@@ -60,15 +60,6 @@
             {% endfor %}
           </select>
         </div>
-        <div style="flex:1; min-width:240px">
-          <label class="muted">Quartier</label>
-          <select class="in" name="quartier_id" {% if item and not is_editable %}disabled{% endif %}>
-            <option value="">—</option>
-            {% for q in quartiers %}
-              <option value="{{ q.id }}" {% if item and item.quartier_id == q.id %}selected{% endif %}>{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
-            {% endfor %}
-          </select>
-        </div>
       </div>
 
       <div class="inline" style="gap:12px; flex-wrap:wrap">

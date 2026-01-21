@@ -73,6 +73,11 @@ DEFAULT_PERMS: list[tuple[str, str]] = [
     ("quartiers:edit", "Créer / modifier un quartier"),
     ("quartiers:delete", "Supprimer un quartier"),
 
+    # Partenaires
+    ("partenaires:view", "Voir l’annuaire partenaires"),
+    ("partenaires:edit", "Créer / modifier un partenaire"),
+    ("partenaires:delete", "Supprimer un partenaire"),
+
     # Inventaire
     ("inventaire:view", "Voir l’inventaire"),
     ("inventaire:edit", "Créer / modifier inventaire"),
@@ -109,6 +114,9 @@ ROLE_TEMPLATES: dict[str, dict[str, Iterable[str]]] = {
             "quartiers:view",
             "quartiers:edit",
             "quartiers:delete",
+            "partenaires:view",
+            "partenaires:edit",
+            "partenaires:delete",
         
         ],
     },
@@ -161,6 +169,9 @@ ROLE_TEMPLATES: dict[str, dict[str, Iterable[str]]] = {
             # Quartiers (lecture seule)
             "quartiers:view",
 
+            # Partenaires
+            "partenaires:view", "partenaires:edit",
+
             # Stats/bilans sur son secteur
             "stats:view", "statsimpact:view", "bilans:view",
 
@@ -182,6 +193,7 @@ def _category_from_code(code: str) -> str:
         "projets": "Projets",
         "participants": "Participants",
         "quartiers": "Quartiers",
+        "partenaires": "Partenaires",
         "depenses": "Dépenses",
         "inventaire": "Inventaire",
         "ateliers": "Ateliers",
