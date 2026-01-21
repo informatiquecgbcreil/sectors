@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="stack">
+  <div class="inline" style="justify-content:space-between; align-items:center">
+    <h1 style="margin:0">{{ 'Nouveau partenaire' if not partenaire else 'Partenaire' }}</h1>
+    <a class="btn" href="{{ url_for('partenaires.index') }}">⬅ Retour</a>
+  </div>
+
+  <div class="card">
+    <h2>{{ 'Éditer' if partenaire else 'Créer' }}</h2>
+    <form method="post" style="display:flex; flex-direction:column; gap:12px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:260px">
+          <label class="muted">Nom du partenaire</label>
+          <input class="in" type="text" name="nom" value="{{ partenaire.nom if partenaire else '' }}" required>
+        </div>
+        <div style="flex:1; min-width:260px">
+          <label class="muted">Secteurs (multi)</label>
+          <select class="in" name="secteur" multiple size="4">
+            {% for s in SECTEURS %}
+              <option value="{{ s }}" {% if s in secteurs %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:220px">
+          <label class="muted">Prénom contact</label>
+          <input class="in" type="text" name="contact_prenom" value="{{ partenaire.contact_prenom if partenaire else '' }}">
+        </div>
+        <div style="flex:1; min-width:220px">
+          <label class="muted">Nom contact</label>
+          <input class="in" type="text" name="contact_nom" value="{{ partenaire.contact_nom if partenaire else '' }}">
+        </div>
+      </div>
+
+      <div>
+        <label class="muted">Adresse</label>
+        <input class="in" type="text" name="adresse" value="{{ partenaire.adresse if partenaire else '' }}">
+      </div>
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Email contact</label>
+          <input class="in" type="email" name="email_contact" value="{{ partenaire.email_contact if partenaire else '' }}">
+        </div>
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Email général</label>
+          <input class="in" type="email" name="email_general" value="{{ partenaire.email_general if partenaire else '' }}">
+        </div>
+      </div>
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Téléphone contact</label>
+          <input class="in" type="text" name="tel_contact" value="{{ partenaire.tel_contact if partenaire else '' }}">
+        </div>
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Téléphone général</label>
+          <input class="in" type="text" name="tel_general" value="{{ partenaire.tel_general if partenaire else '' }}">
+        </div>
+      </div>
+
+      <div>
+        <label class="muted">Description</label>
+        <textarea class="in" name="description" rows="4">{{ partenaire.description if partenaire else '' }}</textarea>
+      </div>
+
+      <div class="inline" style="gap:8px; flex-wrap:wrap">
+        <button class="btn ok" type="submit">Enregistrer</button>
+        <a class="btn" href="{{ url_for('partenaires.index') }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+
+  {% if partenaire %}
+  <div class="card">
+    <h2>Historique des interventions</h2>
+
+    <form method="post" action="{{ url_for('partenaires.add_intervention', partenaire_id=partenaire.id) }}" class="stack" style="gap:10px; margin-top:10px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="inline" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:200px;">
+          <label class="muted">Date</label>
+          <input class="in" type="date" name="date_intervention" required>
+        </div>
+        <div style="min-width:220px;">
+          <label class="muted">Secteur</label>
+          <select class="in" name="secteur">
+            <option value="">—</option>
+            {% for s in SECTEURS %}
+              <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="muted">Description</label>
+        <textarea class="in" name="description" rows="3"></textarea>
+      </div>
+      <div>
+        <button class="btn" type="submit">➕ Ajouter</button>
+      </div>
+    </form>
+
+    <div class="tablewrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Secteur</th>
+            <th>Description</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in partenaire.interventions %}
+            <tr>
+              <td>{{ i.date_intervention.strftime('%d/%m/%Y') }}</td>
+              <td>{{ i.secteur or "—" }}</td>
+              <td class="muted">{{ i.description or "—" }}</td>
+              <td>
+                <form method="post" action="{{ url_for('partenaires.delete_intervention', partenaire_id=partenaire.id, intervention_id=i.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn danger" type="submit" onclick="return confirm('Supprimer cette intervention ?');">🗑️ Supprimer</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          {% if partenaire.interventions|length == 0 %}
+            <tr><td colspan="4" class="muted">Aucune intervention enregistrée.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

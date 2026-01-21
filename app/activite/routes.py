@@ -26,6 +26,7 @@ from app.models import (
 from . import bp
 from .services.docx_utils import generate_collectif_docx_pdf, generate_individuel_mensuel_docx, finalize_individuel_mensuel_pdf
 from .services.mail_utils import send_email_with_attachment
+from app.services.quartiers import normalize_quartier_for_ville
 
 
 # ------------------ Helpers ------------------
@@ -39,21 +40,6 @@ def _user_secteur():
         return (request.args.get("secteur") or current_user.secteur_assigne or "").strip() or "Numérique"
     # responsable_secteur = admin de son secteur
     return (current_user.secteur_assigne or "").strip() or "Numérique"
-
-
-def _ensure_seed_quartiers():
-    # Seed minimal Creil quartiers if none exist
-    if Quartier.query.count() > 0:
-        return
-    seeds = [
-        ("Creil", "Rouher", True),
-        ("Creil", "Hauts de Creil", True),
-        ("Creil", "Autre Creil", False),
-        ("Creil", "Je ne sais pas", False),
-    ]
-    for ville, nom, is_qpv in seeds:
-        db.session.add(Quartier(ville=ville, nom=nom, is_qpv=is_qpv))
-    db.session.commit()
 
 
 def _load_referentiels():
@@ -109,7 +95,6 @@ def _safe_unlink(path: str | None) -> None:
 @bp.route("/")
 @login_required
 def index():
-    _ensure_seed_quartiers()
     secteur = _user_secteur()
     _ensure_seed_ateliers(secteur)
     corbeille = (request.args.get("corbeille") == "1")
@@ -224,8 +209,8 @@ def participant_edit(participant_id: int):
         else:
             p.date_naissance = None
 
-        qid = (request.form.get("quartier_id") or "").strip()
-        p.quartier_id = int(qid) if qid.isdigit() else None
+        qid_raw = (request.form.get("quartier_id") or "").strip()
+        p.quartier_id = normalize_quartier_for_ville(p.ville, qid_raw)
 
         db.session.commit()
         flash("Participant mis à jour.", "success")
@@ -743,8 +728,7 @@ def emargement(session_id: int):
         flash("Accès refusé.", "danger")
         return redirect(url_for("activite.index"))
 
-    _ensure_seed_quartiers()
-    quartiers = Quartier.query.filter_by(ville="Creil").order_by(Quartier.nom.asc()).all()
+    quartiers = Quartier.query.order_by(Quartier.ville.asc(), Quartier.nom.asc()).all()
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -846,9 +830,7 @@ def emargement(session_id: int):
                 except Exception:
                     dn = None
 
-            qid = int(quartier_id) if quartier_id else None
-            if (ville or "").strip().lower() != "creil":
-                qid = None
+            qid = normalize_quartier_for_ville(ville, quartier_id)
 
             p = Participant(
                 nom=nom,

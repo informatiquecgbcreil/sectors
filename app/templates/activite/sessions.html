@@ -59,6 +59,9 @@
                 <td>
                   {% if not corbeille %}
                     <a class="btn" href="{{ url_for('activite.emargement', session_id=s.id) }}">Ouvrir</a>
+                    {% if can('questionnaires:respond') %}
+                      <a class="btn" href="{{ url_for('questionnaires.respond', session_id=s.id) }}">Questionnaire</a>
+                    {% endif %}
                     {% if s.session_type=='COLLECTIF' %}
                       <a class="btn" href="{{ url_for('activite.generate_collectif', session_id=s.id) }}">Générer PDF</a>
                     {% endif %}

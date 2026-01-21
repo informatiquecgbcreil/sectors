@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="stack">
+  <div class="card">
+    <div class="inline" style="justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h1>Annuaire partenaires</h1>
+        <p class="muted">Annuaire commun des partenaires du Centre Georges Brassens.</p>
+      </div>
+      {% if can('partenaires:edit') %}
+      <div>
+        <a class="btn" href="{{ url_for('partenaires.create') }}">➕ Nouveau partenaire</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <form method="get" style="margin-top:12px;">
+      <div class="inline" style="gap:10px; flex-wrap:wrap;">
+        <input class="in" name="q" placeholder="Rechercher (nom, contact, email, téléphone)" value="{{ q }}" style="min-width:280px;">
+        <select class="in" name="secteur" multiple size="4" style="min-width:240px;">
+          {% for s in SECTEURS %}
+            {% set is_selected = s in secteurs %}
+            <option value="{{ s }}" {% if is_selected %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit">Filtrer</button>
+        {% if q or secteurs %}
+          <a class="btn" href="{{ url_for('partenaires.index') }}">Réinitialiser</a>
+        {% endif %}
+      </div>
+      <div class="muted" style="margin-top:6px;">Astuce : Ctrl/Cmd+clic pour sélectionner plusieurs secteurs.</div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Partenaire</th>
+            <th>Contact</th>
+            <th>Emails</th>
+            <th>Téléphones</th>
+            <th>Secteurs</th>
+            <th style="width:200px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in partenaires %}
+            <tr>
+              <td>
+                <strong>{{ p.nom }}</strong>
+                <div class="muted" style="font-size:12px;">{{ p.adresse or "—" }}</div>
+              </td>
+              <td class="muted">{{ (p.contact_prenom or "") ~ (" " if p.contact_prenom or p.contact_nom else "") ~ (p.contact_nom or "") or "—" }}</td>
+              <td class="muted">
+                {{ p.email_contact or "—" }}<br>
+                {{ p.email_general or "—" }}
+              </td>
+              <td class="muted">
+                {{ p.tel_contact or "—" }}<br>
+                {{ p.tel_general or "—" }}
+              </td>
+              <td class="muted">
+                {% if p.secteurs %}
+                  {{ p.secteurs | map(attribute='secteur') | join(', ') }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                <div class="inline" style="gap:8px; flex-wrap:wrap;">
+                  {% if can('partenaires:edit') %}
+                    <a class="btn" href="{{ url_for('partenaires.edit', partenaire_id=p.id) }}">✏️ Éditer</a>
+                  {% endif %}
+                  {% if can('partenaires:delete') %}
+                    <form method="post" action="{{ url_for('partenaires.delete', partenaire_id=p.id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn danger" type="submit" onclick="return confirm('Supprimer ce partenaire ?');">🗑️ Supprimer</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="6" style="padding-top:0;">
+                <details>
+                  <summary class="muted" style="cursor:pointer;">👁️ Voir détails</summary>
+                  <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:10px;">
+                    <div>
+                      <div class="muted">Contact</div>
+                      <div>{{ (p.contact_prenom or "") ~ (" " if p.contact_prenom or p.contact_nom else "") ~ (p.contact_nom or "") or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Adresse</div>
+                      <div>{{ p.adresse or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Emails</div>
+                      <div>{{ p.email_contact or "—" }}<br>{{ p.email_general or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Téléphones</div>
+                      <div>{{ p.tel_contact or "—" }}<br>{{ p.tel_general or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Secteurs</div>
+                      <div>{{ p.secteurs | map(attribute='secteur') | join(', ') if p.secteurs else "—" }}</div>
+                    </div>
+                  </div>
+                  <div style="margin-top:10px;">
+                    <div class="muted">Description</div>
+                    <div class="muted">{{ p.description or "—" }}</div>
+                  </div>
+                </details>
+              </td>
+            </tr>
+          {% endfor %}
+          {% if partenaires|length == 0 %}
+            <tr><td colspan="6" class="muted">Aucun partenaire trouvé.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
