@@ -665,6 +665,7 @@ class Quartier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ville = db.Column(db.String(80), nullable=False, default="Creil")
     nom = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
     is_qpv = db.Column(db.Boolean, default=False)
 
     __table_args__ = (
