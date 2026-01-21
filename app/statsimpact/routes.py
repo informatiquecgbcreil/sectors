@@ -32,6 +32,7 @@ from app.models import (
 )
 
 from app.activite.services.docx_utils import generate_participant_bilan_pdf
+from app.services.quartiers import normalize_quartier_for_ville
 
 from .occupancy import compute_occupancy_stats
 
@@ -746,10 +747,7 @@ def dashboard():
             participant.date_naissance = dn
 
             quartier_id = request.form.get("quartier_id") or None
-            try:
-                participant.quartier_id = int(quartier_id) if quartier_id else None
-            except Exception:
-                participant.quartier_id = None
+            participant.quartier_id = normalize_quartier_for_ville(participant.ville, quartier_id)
 
             try:
                 from app.extensions import db
@@ -881,7 +879,7 @@ def dashboard():
         q = q.filter(AtelierActivite.secteur == flt.secteur)
     ateliers = q.order_by(AtelierActivite.secteur.asc(), AtelierActivite.nom.asc()).all()
 
-    quartiers = Quartier.query.order_by(Quartier.nom.asc()).all()
+    quartiers = Quartier.query.order_by(Quartier.ville.asc(), Quartier.nom.asc()).all()
 
     # Années disponibles (pour presets "année") dans le périmètre accessible
     try:

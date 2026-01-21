@@ -444,7 +444,7 @@
                     <select class="in" name="quartier_id">
                       <option value="">—</option>
                       {% for q in quartiers %}
-                        <option value="{{ q.id }}" {% if p.quartier_id == q.id %}selected{% endif %}>{{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+                        <option value="{{ q.id }}" {% if p.quartier_id == q.id %}selected{% endif %}>{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
                       {% endfor %}
                     </select>
                   </div>

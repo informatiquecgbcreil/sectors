@@ -195,11 +195,11 @@
             <input class="in" name="ville" placeholder="Creil">
           </div>
           <div>
-            <label>Quartier (si Creil)</label>
+            <label>Quartier</label>
             <select class="in" name="quartier_id">
               <option value="">—</option>
               {% for q in quartiers %}
-                <option value="{{ q.id }}">{{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+                <option value="{{ q.id }}">{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
               {% endfor %}
             </select>
           </div>

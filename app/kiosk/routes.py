@@ -26,20 +26,7 @@ from app.models import (
 
 from . import bp
 from app.activite.services.docx_utils import generate_individuel_mensuel_docx
-
-
-def _ensure_seed_quartiers():
-    if Quartier.query.count() > 0:
-        return
-    seeds = [
-        ("Creil", "Rouher", True),
-        ("Creil", "Hauts de Creil", True),
-        ("Creil", "Autre Creil", False),
-        ("Creil", "Je ne sais pas", False),
-    ]
-    for ville, nom, is_qpv in seeds:
-        db.session.add(Quartier(ville=ville, nom=nom, is_qpv=is_qpv))
-    db.session.commit()
+from app.services.quartiers import normalize_quartier_for_ville
 
 
 def _ensure_month_capacity(atelier: AtelierActivite, session: SessionActivite):
@@ -189,14 +176,13 @@ def kiosk_search(token: str):
 @bp.route("/session/<token>", methods=["GET", "POST"])
 def kiosk_session(token: str):
     """Page publique d'émargement d'une session précise."""
-    _ensure_seed_quartiers()
     s = _get_open_session_by_token(token)
     if not s:
         abort(404)
 
     atelier = AtelierActivite.query.get_or_404(s.atelier_id)
     motifs = atelier.motifs() or []
-    quartiers = Quartier.query.filter_by(ville="Creil").order_by(Quartier.nom.asc()).all()
+    quartiers = Quartier.query.order_by(Quartier.ville.asc(), Quartier.nom.asc()).all()
 
     message_ok = None
 
@@ -217,9 +203,7 @@ def kiosk_session(token: str):
                 flash("Nom et prénom obligatoires.", "danger")
                 return redirect(url_for("kiosk.kiosk_session", token=token))
 
-            qid = int(quartier_id) if quartier_id else None
-            if (ville or "").strip().lower() != "creil":
-                qid = None
+            qid = normalize_quartier_for_ville(ville, quartier_id)
 
             dn = None
             if date_naissance:
