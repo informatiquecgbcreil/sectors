@@ -376,6 +376,46 @@
   })();
   </script>
 
+  <script>
+  (function(){
+    function normalize(value){
+      return (value || "").trim().toLowerCase();
+    }
+
+    function applyFilter(select, villeValue){
+      const ville = normalize(villeValue);
+      let selectedHidden = false;
+      select.querySelectorAll("option").forEach((opt) => {
+        const optVille = opt.getAttribute("data-ville");
+        if (!opt.value || !optVille) {
+          opt.hidden = false;
+          return;
+        }
+        const match = !ville || normalize(optVille) === ville;
+        opt.hidden = !match;
+        if (opt.selected && !match) {
+          selectedHidden = true;
+        }
+      });
+      if (selectedHidden) {
+        select.value = "";
+      }
+    }
+
+    document.querySelectorAll("[data-quartier-select]").forEach((select) => {
+      const scope = select.closest("form") || document;
+      const villeInput = scope.querySelector("[data-ville-input]");
+      if (!villeInput) {
+        return;
+      }
+      const run = () => applyFilter(select, villeInput.value);
+      villeInput.addEventListener("input", run);
+      villeInput.addEventListener("change", run);
+      run();
+    });
+  })();
+  </script>
+
   {% block scripts_extra %}{% endblock %}
 </body>
 </html>
