@@ -665,11 +665,144 @@ class Quartier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ville = db.Column(db.String(80), nullable=False, default="Creil")
     nom = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
     is_qpv = db.Column(db.Boolean, default=False)
 
     __table_args__ = (
         db.UniqueConstraint("ville", "nom", name="uq_quartier_ville_nom"),
     )
+
+
+class Partenaire(db.Model):
+    __tablename__ = "partenaire"
+    id = db.Column(db.Integer, primary_key=True)
+
+    nom = db.Column(db.String(180), nullable=False)
+    contact_nom = db.Column(db.String(120), nullable=True)
+    contact_prenom = db.Column(db.String(120), nullable=True)
+    adresse = db.Column(db.String(255), nullable=True)
+
+    email_contact = db.Column(db.String(180), nullable=True)
+    email_general = db.Column(db.String(180), nullable=True)
+    tel_contact = db.Column(db.String(60), nullable=True)
+    tel_general = db.Column(db.String(60), nullable=True)
+
+    description = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    secteurs = db.relationship("PartenaireSecteur", backref="partenaire", cascade="all, delete-orphan")
+    interventions = db.relationship(
+        "PartenaireIntervention",
+        backref="partenaire",
+        cascade="all, delete-orphan",
+        order_by="desc(PartenaireIntervention.date_intervention)",
+    )
+
+
+class PartenaireSecteur(db.Model):
+    __tablename__ = "partenaire_secteur"
+    id = db.Column(db.Integer, primary_key=True)
+    partenaire_id = db.Column(db.Integer, db.ForeignKey("partenaire.id", ondelete="CASCADE"), nullable=False)
+    secteur = db.Column(db.String(80), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("partenaire_id", "secteur", name="uq_partenaire_secteur"),
+    )
+
+
+class PartenaireIntervention(db.Model):
+    __tablename__ = "partenaire_intervention"
+    id = db.Column(db.Integer, primary_key=True)
+    partenaire_id = db.Column(db.Integer, db.ForeignKey("partenaire.id", ondelete="CASCADE"), nullable=False)
+    secteur = db.Column(db.String(80), nullable=True)
+    date_intervention = db.Column(db.Date, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Questionnaire(db.Model):
+    __tablename__ = "questionnaire"
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(180), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    secteurs = db.relationship("QuestionnaireSecteur", backref="questionnaire", cascade="all, delete-orphan")
+    ateliers = db.relationship("QuestionnaireAtelier", backref="questionnaire", cascade="all, delete-orphan")
+    questions = db.relationship("Question", backref="questionnaire", cascade="all, delete-orphan")
+    response_groups = db.relationship("QuestionnaireResponseGroup", backref="questionnaire", cascade="all, delete-orphan")
+
+
+class QuestionnaireSecteur(db.Model):
+    __tablename__ = "questionnaire_secteur"
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey("questionnaire.id", ondelete="CASCADE"), nullable=False)
+    secteur = db.Column(db.String(80), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("questionnaire_id", "secteur", name="uq_questionnaire_secteur"),
+    )
+
+
+class QuestionnaireAtelier(db.Model):
+    __tablename__ = "questionnaire_atelier"
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey("questionnaire.id", ondelete="CASCADE"), nullable=False)
+    atelier_id = db.Column(db.Integer, db.ForeignKey("atelier_activite.id", ondelete="CASCADE"), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("questionnaire_id", "atelier_id", name="uq_questionnaire_atelier"),
+    )
+
+
+class Question(db.Model):
+    __tablename__ = "question"
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey("questionnaire.id", ondelete="CASCADE"), nullable=False)
+    label = db.Column(db.String(255), nullable=False)
+    kind = db.Column(db.String(30), nullable=False, default="text")  # scale/yesno/multi/text
+    is_required = db.Column(db.Boolean, default=False)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    options_json = db.Column(db.Text, nullable=True)
+
+    responses = db.relationship("QuestionResponse", backref="question", cascade="all, delete-orphan")
+
+
+class QuestionnaireResponseGroup(db.Model):
+    __tablename__ = "questionnaire_response_group"
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey("questionnaire.id", ondelete="CASCADE"), nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey("participant.id"), nullable=True)
+    session_id = db.Column(db.Integer, db.ForeignKey("session_activite.id"), nullable=True)
+    atelier_id = db.Column(db.Integer, db.ForeignKey("atelier_activite.id"), nullable=True)
+    secteur = db.Column(db.String(80), nullable=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    participant = db.relationship("Participant")
+    session = db.relationship("SessionActivite")
+    atelier = db.relationship("AtelierActivite")
+
+
+class QuestionResponse(db.Model):
+    __tablename__ = "question_response"
+    id = db.Column(db.Integer, primary_key=True)
+    response_group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("questionnaire_response_group.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    question_id = db.Column(db.Integer, db.ForeignKey("question.id", ondelete="CASCADE"), nullable=False)
+    value_text = db.Column(db.Text, nullable=True)
+    value_number = db.Column(db.Float, nullable=True)
+    value_json = db.Column(db.Text, nullable=True)
+
+    response_group = db.relationship("QuestionnaireResponseGroup")
 
 
 class Participant(db.Model):

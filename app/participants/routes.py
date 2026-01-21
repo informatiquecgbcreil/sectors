@@ -8,7 +8,8 @@ from ..rbac import require_perm, can
 from ..rbac import can_access_secteur
 
 from app.extensions import db
-from app.models import Participant, PresenceActivite, SessionActivite, Evaluation
+from app.models import Participant, PresenceActivite, SessionActivite, Evaluation, Quartier
+from app.services.quartiers import normalize_quartier_for_ville
 
 
 bp = Blueprint("participants", __name__, url_prefix="/participants")
@@ -193,6 +194,8 @@ def new_participant():
                 else (request.form.get("created_secteur") or "").strip() or None
             ),
         )
+        quartier_id = request.form.get("quartier_id") or None
+        p.quartier_id = normalize_quartier_for_ville(p.ville, quartier_id)
 
         d = (request.form.get("date_naissance") or "").strip()
         if d:
@@ -206,7 +209,14 @@ def new_participant():
         flash("Participant créé.", "ok")
         return redirect(url_for("participants.edit_participant", participant_id=p.id))
 
-    return render_template("participants/form.html", item=None, secteur=_current_secteur(), is_editable=True)
+    quartiers = Quartier.query.order_by(Quartier.ville.asc(), Quartier.nom.asc()).all()
+    return render_template(
+        "participants/form.html",
+        item=None,
+        secteur=_current_secteur(),
+        is_editable=True,
+        quartiers=quartiers,
+    )
 
 
 @bp.route("/<int:participant_id>/edit", methods=["GET", "POST"])
@@ -235,6 +245,8 @@ def edit_participant(participant_id: int):
         p.telephone = (request.form.get("telephone") or "").strip() or None
         p.genre = (request.form.get("genre") or "").strip() or None
         p.type_public = (request.form.get("type_public") or p.type_public or "H").strip() or "H"
+        quartier_id = request.form.get("quartier_id") or None
+        p.quartier_id = normalize_quartier_for_ville(p.ville, quartier_id)
 
         d = (request.form.get("date_naissance") or "").strip()
         if d:
@@ -253,7 +265,14 @@ def edit_participant(participant_id: int):
         flash("Participant mis à jour.", "ok")
         return redirect(url_for("participants.edit_participant", participant_id=p.id))
 
-    return render_template("participants/form.html", item=p, secteur=_current_secteur(), is_editable=is_editable)
+    quartiers = Quartier.query.order_by(Quartier.ville.asc(), Quartier.nom.asc()).all()
+    return render_template(
+        "participants/form.html",
+        item=p,
+        secteur=_current_secteur(),
+        is_editable=is_editable,
+        quartiers=quartiers,
+    )
 
 
 @bp.route("/<int:participant_id>/anonymize", methods=["POST"])

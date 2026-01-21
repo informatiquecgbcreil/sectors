@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="stack">
+  <div class="inline" style="justify-content:space-between; align-items:center">
+    <h1 style="margin:0">{{ 'Nouveau questionnaire' if not questionnaire else 'Questionnaire' }}</h1>
+    <a class="btn" href="{{ url_for('questionnaires.index') }}">⬅ Retour</a>
+  </div>
+
+  <div class="card">
+    <form method="post" style="display:flex; flex-direction:column; gap:12px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Nom</label>
+          <input class="in" type="text" name="nom" value="{{ questionnaire.nom if questionnaire else '' }}" required>
+        </div>
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Actif</label>
+          <select class="in" name="is_active">
+            <option value="1" {% if questionnaire is none or questionnaire.is_active %}selected{% endif %}>Oui</option>
+            <option value="0" {% if questionnaire and not questionnaire.is_active %}selected{% endif %}>Non</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="muted">Description</label>
+        <textarea class="in" name="description" rows="3">{{ questionnaire.description if questionnaire else '' }}</textarea>
+      </div>
+
+      <div class="inline" style="gap:12px; flex-wrap:wrap">
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Secteurs (multi)</label>
+          <select class="in" name="secteur" multiple size="5">
+            {% for s in SECTEURS %}
+              <option value="{{ s }}" {% if s in secteurs %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Ateliers (multi)</label>
+          <select class="in" name="atelier_id" multiple size="5">
+            {% for a in ateliers %}
+              <option value="{{ a.id }}" {% if a.id in ateliers_selected %}selected{% endif %}>{{ a.secteur }} — {{ a.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="inline" style="gap:8px; flex-wrap:wrap">
+        <button class="btn ok" type="submit">Enregistrer</button>
+        <a class="btn" href="{{ url_for('questionnaires.index') }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+
+  {% if questionnaire %}
+  <div class="card">
+    <h2>Questions</h2>
+    <form method="post" action="{{ url_for('questionnaires.add_question', questionnaire_id=questionnaire.id) }}" class="stack" style="gap:10px; margin-top:10px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="inline" style="gap:12px; flex-wrap:wrap;">
+        <div style="flex:2; min-width:240px;">
+          <label class="muted">Libellé</label>
+          <input class="in" type="text" name="label" required>
+        </div>
+        <div style="flex:1; min-width:180px;">
+          <label class="muted">Type</label>
+          <select class="in" name="kind">
+            {% for key, label in question_types %}
+              <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="flex:1; min-width:120px;">
+          <label class="muted">Ordre</label>
+          <input class="in" type="number" name="position" min="0" value="0">
+        </div>
+        <div style="flex:1; min-width:120px;">
+          <label class="muted">Obligatoire</label>
+          <select class="in" name="is_required">
+            <option value="0" selected>Non</option>
+            <option value="1">Oui</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="muted">Options (une par ligne, pour choix multiple)</label>
+        <textarea class="in" name="options" rows="3"></textarea>
+      </div>
+      <div>
+        <button class="btn" type="submit">➕ Ajouter</button>
+      </div>
+    </form>
+
+    <div class="tablewrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ordre</th>
+            <th>Question</th>
+            <th>Type</th>
+            <th>Obligatoire</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in questions %}
+            <tr>
+              <td>{{ q.position }}</td>
+              <td>
+                <strong>{{ q.label }}</strong>
+                {% if q.options_json %}
+                  <div class="muted" style="font-size:12px;">{{ q.options_json }}</div>
+                {% endif %}
+              </td>
+              <td class="muted">{{ q.kind }}</td>
+              <td>{% if q.is_required %}<span class="tag">Oui</span>{% else %}—{% endif %}</td>
+              <td>
+                <form method="post" action="{{ url_for('questionnaires.delete_question', question_id=q.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn danger" type="submit" onclick="return confirm('Supprimer cette question ?');">🗑️ Supprimer</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          {% if questions|length == 0 %}
+            <tr><td colspan="5" class="muted">Aucune question.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
