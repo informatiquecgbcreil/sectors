@@ -83,6 +83,39 @@
                 </div>
               </td>
             </tr>
+            <tr>
+              <td colspan="6" style="padding-top:0;">
+                <details>
+                  <summary class="muted" style="cursor:pointer;">👁️ Voir détails</summary>
+                  <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:10px;">
+                    <div>
+                      <div class="muted">Contact</div>
+                      <div>{{ (p.contact_prenom or "") ~ (" " if p.contact_prenom or p.contact_nom else "") ~ (p.contact_nom or "") or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Adresse</div>
+                      <div>{{ p.adresse or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Emails</div>
+                      <div>{{ p.email_contact or "—" }}<br>{{ p.email_general or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Téléphones</div>
+                      <div>{{ p.tel_contact or "—" }}<br>{{ p.tel_general or "—" }}</div>
+                    </div>
+                    <div>
+                      <div class="muted">Secteurs</div>
+                      <div>{{ p.secteurs | map(attribute='secteur') | join(', ') if p.secteurs else "—" }}</div>
+                    </div>
+                  </div>
+                  <div style="margin-top:10px;">
+                    <div class="muted">Description</div>
+                    <div class="muted">{{ p.description or "—" }}</div>
+                  </div>
+                </details>
+              </td>
+            </tr>
           {% endfor %}
           {% if partenaires|length == 0 %}
             <tr><td colspan="6" class="muted">Aucun partenaire trouvé.</td></tr>
