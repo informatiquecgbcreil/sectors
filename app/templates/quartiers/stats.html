@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="stack">
+  <div class="card">
+    <div class="inline" style="justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h1>Stats par quartier</h1>
+        <p class="muted">Sélectionne un quartier pour afficher les indicateurs.</p>
+      </div>
+      <div>
+        <a class="btn" href="{{ url_for('quartiers.index') }}">⬅️ Retour</a>
+      </div>
+    </div>
+
+    <form method="get" style="margin-top:12px;">
+      <div class="inline" style="gap:10px; flex-wrap:wrap;">
+        <select class="in" name="quartier_id" style="min-width:260px;">
+          <option value="">— Choisir un quartier —</option>
+          {% for q in quartiers %}
+            <option value="{{ q.id }}" {% if quartier and q.id == quartier.id %}selected{% endif %}>{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit">Afficher</button>
+      </div>
+    </form>
+  </div>
+
+  {% if quartier %}
+  <div class="card">
+    <h2>{{ quartier.ville }} — {{ quartier.nom }}{% if quartier.is_qpv %} <span class="tag">QPV</span>{% endif %}</h2>
+    <p class="muted">{{ quartier.description or "Aucune description." }}</p>
+  </div>
+  {% endif %}
+
+  {% if stats %}
+  <div class="card">
+    <div class="inline" style="gap:12px; flex-wrap:wrap;">
+      <div class="tag">Participants: {{ stats.participant_count }}</div>
+      <div class="tag">Présences: {{ stats.presence_count }}</div>
+      <div class="tag">Âge moyen: {{ stats.avg_age if stats.avg_age is not none else "—" }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Répartition H/F / genre</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Genre</th>
+            <th>Participants</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for label, count in stats.gender_counts.items() %}
+            <tr>
+              <td>{{ label }}</td>
+              <td><span class="tag">{{ count }}</span></td>
+            </tr>
+          {% endfor %}
+          {% if stats.gender_counts|length == 0 %}
+            <tr><td colspan="2" class="muted">Aucune donnée.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Par secteur</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Secteur</th>
+            <th>Participants</th>
+            <th>Présences</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stats.secteurs %}
+            <tr>
+              <td>{{ row[0] }}</td>
+              <td><span class="tag">{{ row[1] }}</span></td>
+              <td><span class="tag">{{ row[2] }}</span></td>
+            </tr>
+          {% endfor %}
+          {% if stats.secteurs|length == 0 %}
+            <tr><td colspan="3" class="muted">Aucune donnée.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Par atelier</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Atelier</th>
+            <th>Participants</th>
+            <th>Présences</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stats.ateliers %}
+            <tr>
+              <td>{{ row[0] }}</td>
+              <td><span class="tag">{{ row[1] }}</span></td>
+              <td><span class="tag">{{ row[2] }}</span></td>
+            </tr>
+          {% endfor %}
+          {% if stats.ateliers|length == 0 %}
+            <tr><td colspan="3" class="muted">Aucune donnée.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Présences par mois</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mois</th>
+            <th>Présences</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stats.months %}
+            <tr>
+              <td>{{ row[0] }}</td>
+              <td><span class="tag">{{ row[1] }}</span></td>
+            </tr>
+          {% endfor %}
+          {% if stats.months|length == 0 %}
+            <tr><td colspan="2" class="muted">Aucune donnée.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
