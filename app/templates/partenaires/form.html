@@ -7,73 +7,112 @@
     <a class="btn" href="{{ url_for('partenaires.index') }}">⬅ Retour</a>
   </div>
 
-  <div class="card">
-    <form method="post" style="display:flex; flex-direction:column; gap:12px">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-      <div class="inline" style="gap:12px; flex-wrap:wrap">
-        <div style="flex:1; min-width:260px">
-          <label class="muted">Nom du partenaire</label>
-          <input class="in" type="text" name="nom" value="{{ partenaire.nom if partenaire else '' }}" required>
+  <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+    {% if partenaire %}
+    <div class="card">
+      <h2>Voir</h2>
+      <div class="stack" style="gap:10px;">
+        <div>
+          <div class="muted">Nom du partenaire</div>
+          <div><strong>{{ partenaire.nom }}</strong></div>
         </div>
-        <div style="flex:1; min-width:260px">
-          <label class="muted">Secteurs (multi)</label>
-          <select class="in" name="secteur" multiple size="4">
-            {% for s in SECTEURS %}
-              <option value="{{ s }}" {% if s in secteurs %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-          </select>
+        <div>
+          <div class="muted">Secteurs</div>
+          <div>{{ secteurs | join(', ') or "—" }}</div>
         </div>
-      </div>
-
-      <div class="inline" style="gap:12px; flex-wrap:wrap">
-        <div style="flex:1; min-width:220px">
-          <label class="muted">Prénom contact</label>
-          <input class="in" type="text" name="contact_prenom" value="{{ partenaire.contact_prenom if partenaire else '' }}">
+        <div>
+          <div class="muted">Contact</div>
+          <div>{{ (partenaire.contact_prenom or "") ~ (" " if partenaire.contact_prenom or partenaire.contact_nom else "") ~ (partenaire.contact_nom or "") or "—" }}</div>
         </div>
-        <div style="flex:1; min-width:220px">
-          <label class="muted">Nom contact</label>
-          <input class="in" type="text" name="contact_nom" value="{{ partenaire.contact_nom if partenaire else '' }}">
+        <div>
+          <div class="muted">Adresse</div>
+          <div>{{ partenaire.adresse or "—" }}</div>
         </div>
-      </div>
-
-      <div>
-        <label class="muted">Adresse</label>
-        <input class="in" type="text" name="adresse" value="{{ partenaire.adresse if partenaire else '' }}">
-      </div>
-
-      <div class="inline" style="gap:12px; flex-wrap:wrap">
-        <div style="flex:1; min-width:240px">
-          <label class="muted">Email contact</label>
-          <input class="in" type="email" name="email_contact" value="{{ partenaire.email_contact if partenaire else '' }}">
+        <div>
+          <div class="muted">Emails</div>
+          <div>{{ partenaire.email_contact or "—" }}<br>{{ partenaire.email_general or "—" }}</div>
         </div>
-        <div style="flex:1; min-width:240px">
-          <label class="muted">Email général</label>
-          <input class="in" type="email" name="email_general" value="{{ partenaire.email_general if partenaire else '' }}">
+        <div>
+          <div class="muted">Téléphones</div>
+          <div>{{ partenaire.tel_contact or "—" }}<br>{{ partenaire.tel_general or "—" }}</div>
+        </div>
+        <div>
+          <div class="muted">Description</div>
+          <div class="muted">{{ partenaire.description or "—" }}</div>
         </div>
       </div>
+    </div>
+    {% endif %}
 
-      <div class="inline" style="gap:12px; flex-wrap:wrap">
-        <div style="flex:1; min-width:240px">
-          <label class="muted">Téléphone contact</label>
-          <input class="in" type="text" name="tel_contact" value="{{ partenaire.tel_contact if partenaire else '' }}">
+    <div class="card">
+      <h2>{{ 'Éditer' if partenaire else 'Créer' }}</h2>
+      <form method="post" style="display:flex; flex-direction:column; gap:12px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="inline" style="gap:12px; flex-wrap:wrap">
+          <div style="flex:1; min-width:260px">
+            <label class="muted">Nom du partenaire</label>
+            <input class="in" type="text" name="nom" value="{{ partenaire.nom if partenaire else '' }}" required>
+          </div>
+          <div style="flex:1; min-width:260px">
+            <label class="muted">Secteurs (multi)</label>
+            <select class="in" name="secteur" multiple size="4">
+              {% for s in SECTEURS %}
+                <option value="{{ s }}" {% if s in secteurs %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-        <div style="flex:1; min-width:240px">
-          <label class="muted">Téléphone général</label>
-          <input class="in" type="text" name="tel_general" value="{{ partenaire.tel_general if partenaire else '' }}">
+
+        <div class="inline" style="gap:12px; flex-wrap:wrap">
+          <div style="flex:1; min-width:220px">
+            <label class="muted">Prénom contact</label>
+            <input class="in" type="text" name="contact_prenom" value="{{ partenaire.contact_prenom if partenaire else '' }}">
+          </div>
+          <div style="flex:1; min-width:220px">
+            <label class="muted">Nom contact</label>
+            <input class="in" type="text" name="contact_nom" value="{{ partenaire.contact_nom if partenaire else '' }}">
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label class="muted">Description</label>
-        <textarea class="in" name="description" rows="4">{{ partenaire.description if partenaire else '' }}</textarea>
-      </div>
+        <div>
+          <label class="muted">Adresse</label>
+          <input class="in" type="text" name="adresse" value="{{ partenaire.adresse if partenaire else '' }}">
+        </div>
 
-      <div class="inline" style="gap:8px; flex-wrap:wrap">
-        <button class="btn ok" type="submit">Enregistrer</button>
-        <a class="btn" href="{{ url_for('partenaires.index') }}">Annuler</a>
-      </div>
-    </form>
+        <div class="inline" style="gap:12px; flex-wrap:wrap">
+          <div style="flex:1; min-width:240px">
+            <label class="muted">Email contact</label>
+            <input class="in" type="email" name="email_contact" value="{{ partenaire.email_contact if partenaire else '' }}">
+          </div>
+          <div style="flex:1; min-width:240px">
+            <label class="muted">Email général</label>
+            <input class="in" type="email" name="email_general" value="{{ partenaire.email_general if partenaire else '' }}">
+          </div>
+        </div>
+
+        <div class="inline" style="gap:12px; flex-wrap:wrap">
+          <div style="flex:1; min-width:240px">
+            <label class="muted">Téléphone contact</label>
+            <input class="in" type="text" name="tel_contact" value="{{ partenaire.tel_contact if partenaire else '' }}">
+          </div>
+          <div style="flex:1; min-width:240px">
+            <label class="muted">Téléphone général</label>
+            <input class="in" type="text" name="tel_general" value="{{ partenaire.tel_general if partenaire else '' }}">
+          </div>
+        </div>
+
+        <div>
+          <label class="muted">Description</label>
+          <textarea class="in" name="description" rows="4">{{ partenaire.description if partenaire else '' }}</textarea>
+        </div>
+
+        <div class="inline" style="gap:8px; flex-wrap:wrap">
+          <button class="btn ok" type="submit">Enregistrer</button>
+          <a class="btn" href="{{ url_for('partenaires.index') }}">Annuler</a>
+        </div>
+      </form>
+    </div>
   </div>
 
   {% if partenaire %}
