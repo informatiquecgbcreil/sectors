@@ -61,6 +61,8 @@ def create_app():
     from app.participants.routes import bp as participants_bp
     from app.launcher import bp as launcher_bp
     from app.pedagogie.routes import bp as pedagogie_bp
+    from app.quartiers import bp as quartiers_bp
+    from app.partenaires import bp as partenaires_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -76,6 +78,8 @@ def create_app():
     app.register_blueprint(participants_bp)
     app.register_blueprint(launcher_bp)
     app.register_blueprint(pedagogie_bp)
+    app.register_blueprint(quartiers_bp)
+    app.register_blueprint(partenaires_bp)
 
     # ------------------------------------------------------------------
     # RBAC helpers
@@ -138,6 +142,20 @@ def create_app():
                 "nature",
                 "ALTER TABLE ligne_budget ADD COLUMN nature VARCHAR(10) NOT NULL DEFAULT 'charge'",
                 "ALTER TABLE ligne_budget ADD COLUMN IF NOT EXISTS nature VARCHAR(10) NOT NULL DEFAULT 'charge'",
+            )
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        # --------------------------------------------------------------
+        # 2) Quartiers: description libre
+        # --------------------------------------------------------------
+        try:
+            add_col(
+                "quartier",
+                "description",
+                "ALTER TABLE quartier ADD COLUMN description TEXT",
+                "ALTER TABLE quartier ADD COLUMN IF NOT EXISTS description TEXT",
             )
             db.session.commit()
         except Exception:
