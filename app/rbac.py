@@ -68,6 +68,16 @@ DEFAULT_PERMS: list[tuple[str, str]] = [
     ("participants:delete", "Supprimer un participant"),
     ("participants:anonymize", "Anonymiser un participant"),
 
+    # Quartiers
+    ("quartiers:view", "Voir les quartiers"),
+    ("quartiers:edit", "Créer / modifier un quartier"),
+    ("quartiers:delete", "Supprimer un quartier"),
+
+    # Partenaires
+    ("partenaires:view", "Voir l’annuaire partenaires"),
+    ("partenaires:edit", "Créer / modifier un partenaire"),
+    ("partenaires:delete", "Supprimer un partenaire"),
+
     # Inventaire
     ("inventaire:view", "Voir l’inventaire"),
     ("inventaire:edit", "Créer / modifier inventaire"),
@@ -101,6 +111,12 @@ ROLE_TEMPLATES: dict[str, dict[str, Iterable[str]]] = {
             "scope:all_secteurs",
             "secteurs:view",
             "secteurs:edit",
+            "quartiers:view",
+            "quartiers:edit",
+            "quartiers:delete",
+            "partenaires:view",
+            "partenaires:edit",
+            "partenaires:delete",
         
         ],
     },
@@ -150,6 +166,12 @@ ROLE_TEMPLATES: dict[str, dict[str, Iterable[str]]] = {
             # Participants: vue globale, mais edit/delete bornés au secteur via _can_edit_participant
             "participants:view_all", "participants:edit", "participants:delete", "participants:anonymize",
 
+            # Quartiers (lecture seule)
+            "quartiers:view",
+
+            # Partenaires
+            "partenaires:view", "partenaires:edit",
+
             # Stats/bilans sur son secteur
             "stats:view", "statsimpact:view", "bilans:view",
 
@@ -170,6 +192,8 @@ def _category_from_code(code: str) -> str:
         "depenses": "Dépenses",
         "projets": "Projets",
         "participants": "Participants",
+        "quartiers": "Quartiers",
+        "partenaires": "Partenaires",
         "depenses": "Dépenses",
         "inventaire": "Inventaire",
         "ateliers": "Ateliers",

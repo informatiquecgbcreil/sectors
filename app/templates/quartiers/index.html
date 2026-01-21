@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="stack">
+  <div class="card">
+    <div class="inline" style="justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h1>Quartiers</h1>
+        <p class="muted">Gère les quartiers utilisés dans les listes déroulantes et l'affichage des stats.</p>
+      </div>
+      <div class="inline" style="gap:8px;">
+        <a class="btn" href="{{ url_for('quartiers.stats') }}">📊 Stats quartiers</a>
+      </div>
+    </div>
+  </div>
+
+  {% if can('quartiers:edit') %}
+  <div class="card">
+    <h2>Ajouter un quartier</h2>
+    <form method="post" action="{{ url_for('quartiers.create') }}" class="stack" style="gap:10px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="inline" style="gap:10px; flex-wrap:wrap;">
+        <input class="in" name="ville" placeholder="Ville" style="min-width:180px;" required>
+        <input class="in" name="nom" placeholder="Nom du quartier" style="min-width:220px;" required>
+        <label class="inline" style="gap:6px; align-items:center;">
+          <input type="checkbox" name="is_qpv" value="1">
+          <span>QPV</span>
+        </label>
+      </div>
+      <textarea class="in" name="description" placeholder="Description (optionnel)" rows="3"></textarea>
+      <div>
+        <button class="btn" type="submit">➕ Ajouter</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ville</th>
+            <th>Quartier</th>
+            <th>QPV</th>
+            <th>Description</th>
+            <th style="width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in quartiers %}
+            <tr>
+              <td>{{ q.ville }}</td>
+              <td><strong>{{ q.nom }}</strong></td>
+              <td>{% if q.is_qpv %}<span class="tag">QPV</span>{% else %}—{% endif %}</td>
+              <td class="muted">{{ q.description or "—" }}</td>
+              <td>
+                <div class="inline" style="gap:8px; flex-wrap:wrap;">
+                  {% if can('quartiers:edit') %}
+                    <a class="btn" href="{{ url_for('quartiers.edit', quartier_id=q.id) }}">✏️ Éditer</a>
+                  {% endif %}
+                  {% if can('quartiers:delete') %}
+                    <form method="post" action="{{ url_for('quartiers.delete', quartier_id=q.id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn danger" type="submit" onclick="return confirm('Supprimer ce quartier ?');">🗑️ Supprimer</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+          {% if quartiers|length == 0 %}
+            <tr><td colspan="5" class="muted">Aucun quartier enregistré.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

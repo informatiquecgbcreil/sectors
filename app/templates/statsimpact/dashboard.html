@@ -437,14 +437,14 @@
                   </div>
                   <div>
                     <label>Ville</label>
-                    <input class="in" name="ville" value="{{ p.ville or '' }}">
+                    <input class="in" name="ville" value="{{ p.ville or '' }}" data-ville-input>
                   </div>
                   <div>
                     <label>Quartier</label>
-                    <select class="in" name="quartier_id">
+                    <select class="in" name="quartier_id" data-quartier-select>
                       <option value="">—</option>
                       {% for q in quartiers %}
-                        <option value="{{ q.id }}" {% if p.quartier_id == q.id %}selected{% endif %}>{{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+                        <option value="{{ q.id }}" data-ville="{{ q.ville }}" {% if p.quartier_id == q.id %}selected{% endif %}>{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
                       {% endfor %}
                     </select>
                   </div>

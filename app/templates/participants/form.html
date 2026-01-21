@@ -49,7 +49,16 @@
         </div>
         <div style="flex:1; min-width:240px">
           <label class="muted">Ville</label>
-          <input class="in" type="text" name="ville" value="{{ item.ville if item and item.ville else '' }}" {% if item and not is_editable %}disabled{% endif %}>
+          <input class="in" type="text" name="ville" value="{{ item.ville if item and item.ville else '' }}" data-ville-input {% if item and not is_editable %}disabled{% endif %}>
+        </div>
+        <div style="flex:1; min-width:240px">
+          <label class="muted">Quartier</label>
+          <select class="in" name="quartier_id" data-quartier-select {% if item and not is_editable %}disabled{% endif %}>
+            <option value="">—</option>
+            {% for q in quartiers %}
+              <option value="{{ q.id }}" data-ville="{{ q.ville }}" {% if item and item.quartier_id == q.id %}selected{% endif %}>{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
 

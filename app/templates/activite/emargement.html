@@ -192,14 +192,14 @@
           </div>
           <div>
             <label>Ville</label>
-            <input class="in" name="ville" placeholder="Creil">
+            <input class="in" name="ville" placeholder="Creil" data-ville-input>
           </div>
           <div>
-            <label>Quartier (si Creil)</label>
-            <select class="in" name="quartier_id">
+            <label>Quartier</label>
+            <select class="in" name="quartier_id" data-quartier-select>
               <option value="">—</option>
               {% for q in quartiers %}
-                <option value="{{ q.id }}">{{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
+                <option value="{{ q.id }}" data-ville="{{ q.ville }}">{{ q.ville }} — {{ q.nom }}{% if q.is_qpv %} (QPV){% endif %}</option>
               {% endfor %}
             </select>
           </div>
